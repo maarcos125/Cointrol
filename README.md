@@ -1,5 +1,14 @@
 # Cointrol
 
+Hay dos versiones de la app en este repositorio:
+
+- **Cointrol** (raíz): estilo de videojuego retro. https://maarcos125.github.io/Cointrol/
+- **Cointrol Clásico** (`clasica/`): diseño limpio al estilo de Cashew (Material You, modo claro y oscuro, color de acento), sin niveles, logros ni misiones; las metas se llaman «Objetivos». https://maarcos125.github.io/Cointrol/clasica/
+
+Las dos tienen las mismas funciones de control de gastos y exportación al Excel, se instalan por separado y guardan sus datos por separado. Cointrol Clásico puede copiar los datos de la versión videojuego (Más → Importar del Excel).
+
+## Versión videojuego
+
 App para el móvil para controlar gastos, ingresos y ahorro, con estilo de videojuego retro. Es una app web instalable (PWA): se instala desde Chrome en Android, funciona sin conexión y **guarda los datos solo en el móvil** (no hay cuentas ni servidores).
 
 ## Funciones

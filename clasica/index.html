@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cointrol Clásico</title>
+  <meta name="description" content="Control de gastos, ingresos, presupuestos y ahorro. Tus datos se guardan solo en tu móvil.">
+  <meta name="theme-color" content="#f7f8f2">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="../icons/favicon.png">
+  <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="back" class="icon-btn flat" aria-label="Volver" hidden>‹</button>
+    <h1 id="title">Inicio</h1>
+    <img src="../icons/icon-192.png" alt="" class="topbar-logo">
+  </header>
+
+  <main id="view" class="view"></main>
+
+  <button id="fab" class="fab" aria-label="Añadir transacción"><span>+</span></button>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-nav="home"><span class="ti"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span><span>Inicio</span></button>
+    <button data-nav="tx"><span class="ti"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span><span>Transacciones</span></button>
+    <button data-nav="budgets"><span class="ti"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.5 6"/></svg></span><span>Presupuestos</span></button>
+    <button data-nav="goals"><span class="ti"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></span><span>Objetivos</span></button>
+    <button data-nav="more"><span class="ti"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg></span><span>Más</span></button>
+  </nav>
+
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-panel" role="dialog" aria-modal="true"><div class="sheet-handle"></div><div id="sheet-body"></div></div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/core.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/forms.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
