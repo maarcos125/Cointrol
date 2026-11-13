@@ -6,11 +6,13 @@ function openSheet(draw) {
   $('#sheet').hidden = false;
   document.body.classList.add('noscroll');
   draw($('#sheet-body'));
+  syncHistory();
 }
 function closeSheet() {
   $('#sheet').hidden = true;
   $('#sheet-body').innerHTML = '';
   document.body.classList.remove('noscroll');
+  syncHistory();
 }
 let toastTimer;
 function toast(msg, kind = '') {
@@ -73,7 +75,7 @@ function movementForm(existing, preset = {}) {
     if (!tr) {
       $$('[data-c]', root).forEach((b) => (b.onclick = () => { keep(); if (st.catId !== b.dataset.c) st.sub = ''; st.catId = b.dataset.c; sfx('click'); draw(root); }));
       $$('[data-s]', root).forEach((b) => (b.onclick = () => { keep(); st.sub = st.sub === b.dataset.s ? '' : b.dataset.s; draw(root); }));
-      $('[data-newcat]', root).onclick = () => { keep(); categoryForm(null, st.type, (id) => { st.catId = id; st.sub = ''; openSheet(draw); }); };
+      $('[data-newcat]', root).onclick = () => { keep(); if (canAdd('customCats')) categoryForm(null, st.type, (id) => { st.catId = id; st.sub = ''; openSheet(draw); }); };
       // Autocompletar: si ya usaste esta descripción, propone su categoría (como Cashew)
       const showSuggest = () => {
         const list = suggestTitles($('#f-desc', root).value, st.type);
@@ -99,6 +101,7 @@ function movementForm(existing, preset = {}) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(st.date)) return fail('Fecha no válida');
       if (tr) { if (st.accountId === st.toAccountId) return fail('Elige dos cuentas distintas'); }
       else if (!st.catId) return fail('Elige una categoría');
+      if (!existing && st.repeat && !isPro() && countOf('recurring') >= FREE_LIMITS.recurring) return fail(`La versión gratis permite ${FREE_LIMITS.recurring} recurrentes`);
       const rec = {
         id: existing ? existing.id : uid(), type: st.type, amount, desc: tr ? '' : st.desc.trim(), note: st.note.trim(), date: st.date,
         catId: tr ? '' : st.catId, sub: tr ? '' : st.sub, accountId: st.accountId, toAccountId: tr ? st.toAccountId : undefined,
@@ -260,9 +263,9 @@ function budgetForm(existing) {
       <div class="field"><label>Límite</label><input class="input" id="b-amount" inputmode="decimal" placeholder="p. ej. 400" value="${esc(amountStr(st.amount))}" ${st.auto && st.period !== 'custom' ? 'disabled' : ''}></div>
       <div class="field"><span class="label">Categorías incluidas <small>(ninguna = todas)</small></span><div class="chips">
         ${expCats.map((c) => `<button type="button" class="chip ${st.cats.includes(c.id) ? 'on' : ''}" data-bc="${c.id}">${c.icon} ${esc(c.name)}</button>`).join('')}</div></div>
-      <details class="field"><summary class="label">Límites por categoría (opcional)</summary>
+      ${!isPro() ? `<button type="button" class="btn ghost" data-action="paywall" data-v="catLimits">🔒 Límites por categoría · PRO</button>` : `<details class="field"><summary class="label">Límites por categoría (opcional)</summary>
         ${expCats.filter((c) => !st.cats.length || st.cats.includes(c.id)).map((c) => `<div class="row item">${ico(c)}<span class="grow">${esc(c.name)}</span>
-          <input class="input lim" data-lim="${c.id}" inputmode="decimal" placeholder="—" value="${esc(amountStr(st.catLimits[c.id] || ''))}"></div>`).join('')}</details>
+          <input class="input lim" data-lim="${c.id}" inputmode="decimal" placeholder="—" value="${esc(amountStr(st.catLimits[c.id] || ''))}"></div>`).join('')}</details>`}
       <button class="btn" id="b-save">${existing ? 'Guardar' : 'Crear presupuesto'}</button>
       ${existing && db.budgets.length > 1 ? '<button class="btn danger" id="b-del">Eliminar</button>' : ''}
       <button class="btn ghost" data-close>Cancelar</button>`;
@@ -322,7 +325,7 @@ function recurringForm(existing) {
     $$('[data-c]', root).forEach((b) => (b.onclick = () => { keep(); if (st.catId !== b.dataset.c) st.sub = ''; st.catId = b.dataset.c; draw(root); }));
     $$('[data-s]', root).forEach((b) => (b.onclick = () => { keep(); st.sub = st.sub === b.dataset.s ? '' : b.dataset.s; draw(root); }));
     $$('[data-f]', root).forEach((b) => (b.onclick = () => { keep(); st.freq = b.dataset.f; draw(root); }));
-    $('[data-newcat]', root).onclick = () => { keep(); categoryForm(null, st.type, (id) => { st.catId = id; openSheet(draw); }); };
+    $('[data-newcat]', root).onclick = () => { keep(); if (canAdd('customCats')) categoryForm(null, st.type, (id) => { st.catId = id; openSheet(draw); }); };
     $('#r-save', root).onclick = () => {
       keep();
       const amount = parseAmount(st.amount);
@@ -432,27 +435,28 @@ const hashPin = async (pin) => {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cointrol:' + pin));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 };
-function pinPad(title, onDone) {
+function pinPad(title, onDone, boot = false) {
   const el = document.createElement('div');
-  el.className = 'lock';
+  el.className = 'lock' + (boot ? ' boot' : '');
   let code = '';
   const paint = () => {
-    el.innerHTML = `<div class="lock-box"><img src="icons/logo-pixel.png" alt="" class="lock-logo"><div class="lu-title">${esc(title)}</div>
+    el.innerHTML = `<div class="lock-box"><img src="${BASE}icons/logo-pixel.png" alt="" class="lock-logo"><div class="lu-title">${esc(title)}</div>
       <div class="pin-dots">${[0, 1, 2, 3].map((i) => `<i class="${i < code.length ? 'on' : ''}"></i>`).join('')}</div>
       <div class="pin-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map((k) => `<button type="button" data-k="${k}" ${k === '' ? 'disabled' : ''}>${k}</button>`).join('')}</div></div>`;
     $$('[data-k]', el).forEach((b) => (b.onclick = async () => {
       const k = b.dataset.k;
       if (k === '⌫') code = code.slice(0, -1); else if (code.length < 4) code += k;
       sfx('click'); paint();
-      if (code.length === 4) { const ok = await onDone(code); if (ok) el.remove(); else { code = ''; el.querySelector('.pin-dots').classList.add('shake'); sfx('error'); setTimeout(paint, 400); } }
+      if (code.length === 4) { const ok = await onDone(code); if (ok) { el.remove(); syncHistory(); } else { code = ''; el.querySelector('.pin-dots').classList.add('shake'); sfx('error'); setTimeout(paint, 400); } }
     }));
   };
   paint();
   document.body.appendChild(el);
+  syncHistory();
 }
 function lockIfNeeded() {
   if (!db.settings.pinHash) return;
-  pinPad('Introduce tu PIN', async (code) => (await hashPin(code)) === db.settings.pinHash);
+  pinPad('Introduce tu PIN', async (code) => (await hashPin(code)) === db.settings.pinHash, true);
 }
 function setPin() {
   pinPad('Nuevo PIN', async (first) => {

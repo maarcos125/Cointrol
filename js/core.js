@@ -3,7 +3,10 @@
    Todo vive en el almacenamiento local del móvil; nada sale del dispositivo. */
 
 // ================================================================ utilidades
-const KEY = 'cointrol.v1'; // misma clave que la v1 para conservar tus datos
+// Las apps de prueba (gratis / Pro) definen window.EDITION antes de cargar este archivo.
+const EDITION = window.EDITION || null;
+const BASE = EDITION ? '../' : ''; // ruta a los archivos compartidos (iconos)
+const KEY = EDITION ? EDITION.key : 'cointrol.v1'; // misma clave que la v1 para conservar tus datos
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

@@ -34,9 +34,13 @@ document.addEventListener('click', (e) => {
   switch (a) {
     case 'month': ui.ym = addMonths(ui.ym, +el.dataset.d); render(); break;
     case 'year': ui.year += +el.dataset.d; render(); break;
-    case 'exmonth': ui.exYM = addMonths(ui.exYM, +el.dataset.d); render(); break;
+    case 'exmonth': {
+      const ym = addMonths(ui.exYM, +el.dataset.d);
+      if (!isPro() && ym !== curYM()) { paywall('excelMonths'); break; }
+      ui.exYM = ym; render(); break;
+    }
     case 'filter': ui.filter = el.dataset.v; render(); break;
-    case 'stats-mode': ui.statsMode = el.dataset.v; render(); break;
+    case 'stats-mode': if (el.dataset.v === 'year' && !requirePro('year')) break; ui.statsMode = el.dataset.v; render(); break;
     case 'quest-tab': ui.questTab = el.dataset.v; render(); break;
     case 'edit-mov': movementForm(mov()); break;
     case 'select-mode': ui.select = !ui.select; ui.selected.clear(); render(); break;
@@ -50,27 +54,30 @@ document.addEventListener('click', (e) => {
       break;
     case 'pay': { const m = mov(); if (!m) break; m.pending = false; if (m.date > today()) m.date = today(); save(); sfx('coin'); render(); toast('Pagado ✔'); checkProgress(); break; }
     case 'skip': if (confirm('¿Saltar este pago? Se borrará de la lista.')) { db.movements = db.movements.filter((m) => m.id !== id); save(); render(); } break;
-    case 'new-goal': goalForm(null); break;
+    case 'new-goal': if (canAdd('goals')) goalForm(null); break;
     case 'edit-goal': goalForm(db.goals.find((g) => g.id === id)); break;
     case 'goal-up': moveGoal(id, -1); break;
     case 'goal-down': moveGoal(id, 1); break;
-    case 'sub': ui.sub = el.dataset.sub || null; sfx('click'); render(); window.scrollTo(0, 0); break;
-    case 'new-cat': categoryForm(null, 'expense'); break;
+    case 'sub':
+      if (el.dataset.sub === 'loans' && !requirePro('loans')) break;
+      if (el.dataset.sub === 'import' && !requirePro('import')) break;
+      ui.sub = el.dataset.sub || null; sfx('click'); render(); window.scrollTo(0, 0); break;
+    case 'new-cat': if (canAdd('customCats')) categoryForm(null, 'expense'); break;
     case 'edit-cat': categoryForm(cat(id)); break;
-    case 'new-budget': budgetForm(null); break;
+    case 'new-budget': if (canAdd('budgets')) budgetForm(null); break;
     case 'edit-budget': budgetForm(db.budgets.find((b) => b.id === id)); break;
-    case 'new-rec': recurringForm(null); break;
+    case 'new-rec': if (canAdd('recurring')) recurringForm(null); break;
     case 'edit-rec': recurringForm(db.recurring.find((r) => r.id === id)); break;
     case 'new-loan': loanForm(null); break;
     case 'edit-loan': loanForm(db.loans.find((l) => l.id === id)); break;
-    case 'new-acc': accountForm(null); break;
+    case 'new-acc': if (canAdd('accounts')) accountForm(null); break;
     case 'edit-acc': accountForm(account(id)); break;
     case 'new-transfer':
       if (db.accounts.length < 2) { toast('Necesitas al menos dos cuentas', 'bad'); break; }
       movementForm(null, { type: 'transfer' }); break;
     case 'copy-exp': {
       const { exp } = excelRows(ui.exYM);
-      copyText(tsv(db.settings.xlHeader ? [XL_HEAD, ...exp] : exp), `${exp.length} gastos copiados · pégalos en B23`); markExported();
+      copyText(tsv(db.settings.xlHeader ? [XL_HEAD, ...exp] : exp), `${exp.length} gastos copiados · pégalos en B23`); markExported(); setTimeout(maybeInterstitial, 900);
       break;
     }
     case 'copy-principal': { const { principal, num } = excelRows(ui.exYM); copyText(num(principal), 'Ingreso principal copiado · pégalo en C5'); markExported(); break; }
@@ -78,12 +85,12 @@ document.addEventListener('click', (e) => {
     case 'csv': {
       const { exp } = excelRows(ui.exYM);
       const csv = '﻿' + [XL_HEAD, ...exp].map((r) => r.map((v) => `"${cleanCell(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
-      download(`cointrol-gastos-${ui.exYM}.csv`, csv, 'text/csv;charset=utf-8'); markExported();
+      download(`cointrol-gastos-${ui.exYM}.csv`, csv, 'text/csv;charset=utf-8'); markExported(); setTimeout(maybeInterstitial, 900);
       break;
     }
     case 'imp-preview': importPreview(); break;
     case 'imp-commit': importCommit(); break;
-    case 'avatar': db.settings.avatar = el.dataset.v; save(); render(); break;
+    case 'avatar': if (AVATARS.indexOf(el.dataset.v) >= FREE_LIMITS.avatars && !requirePro('avatars')) break; db.settings.avatar = el.dataset.v; save(); render(); break;
     case 'save-name': db.settings.playerName = $('#set-name').value.trim() || 'Jugador'; save(); render(); toast('Guardado'); break;
     case 'save-target': {
       const v = Number($('#target').value);
@@ -91,7 +98,7 @@ document.addEventListener('click', (e) => {
       db.settings.savingsTarget = v / 100; save(); toast('Objetivo guardado'); render();
       break;
     }
-    case 'pin-on': setPin(); break;
+    case 'pin-on': if (requirePro('pin')) setPin(); break;
     case 'pin-off': if (confirm('¿Quitar el PIN?')) { db.settings.pinHash = ''; save(); render(); } break;
     case 'backup':
       db.meta.backups = (db.meta.backups || 0) + 1; save();
@@ -104,6 +111,11 @@ document.addEventListener('click', (e) => {
         db = freshDB(); save(); render(); toast('Datos borrados');
       }
       break;
+    case 'paywall': paywall(el.dataset.v); break;
+    case 'buy': buyDemo(); break;
+    case 'reward': closeSheet(); rewardedAd(); break;
+    case 'restore-buy': toast(isPro() ? 'Ya tienes Pro' : 'No hay compras que restaurar (demo)'); break;
+    case 'dev-tap': devTap(el); break;
     case 'install':
       if (deferredInstall) { deferredInstall.prompt(); deferredInstall.userChoice.finally(() => { deferredInstall = null; render(); }); }
       break;

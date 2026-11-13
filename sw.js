@@ -1,8 +1,8 @@
 // Cointrol: funciona sin conexión. Solo guarda en caché los archivos de la app;
 // tus datos viven en el almacenamiento local del móvil y nunca salen de él.
-const CACHE = 'cointrol-v2';
+const CACHE = 'cointrol-v3';
 const ASSETS = [
-  './', 'index.html', 'css/game.css', 'js/core.js', 'js/game.js', 'js/views.js', 'js/forms.js', 'js/main.js',
+  './', 'index.html', 'css/game.css', 'js/core.js', 'js/game.js', 'js/views.js', 'js/forms.js', 'js/nav.js', 'js/pro.js', 'js/main.js',
   'manifest.webmanifest', 'fonts/vt323.woff2', 'fonts/press-start-2p.woff2',
   'icons/logo-pixel.png', 'icons/favicon.png', 'icons/icon-192.png', 'icons/icon-512.png',
   'icons/maskable-192.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png',

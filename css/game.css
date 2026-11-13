@@ -412,3 +412,38 @@ textarea.input { font-size: 17px; resize: vertical; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- ediciones Gratis / Pro (apps de prueba) ---------- */
+.pro-tag { display: inline-block; font-family: var(--px); font-size: 7px; line-height: 1; padding: 4px 5px; background: var(--gold); color: var(--ink); vertical-align: middle; box-shadow: 0 0 0 2px var(--ink); }
+.ad {
+  display: flex; align-items: center; gap: 12px; position: relative; margin: 0 4px 16px; padding: 18px 12px 12px;
+  background: #e9edf2; color: #1d232b; font-family: system-ui, sans-serif; font-size: 14px; box-shadow: 0 0 0 2px var(--ink);
+}
+.ad b { display: block; font-size: 15px; }
+.ad-label { position: absolute; top: 3px; left: 8px; font-family: system-ui, sans-serif; font-size: 10px; color: #6b7480; text-transform: uppercase; letter-spacing: .5px; }
+.ad-ico { font-size: 30px; }
+.ad .mini { font-family: var(--vt); }
+.ad-full .levelup-box { background: #e9edf2; color: #1d232b; font-family: system-ui, sans-serif; }
+.ad-full .lu-title { color: #1d232b; font-family: system-ui, sans-serif; font-size: 22px; font-weight: 700; }
+.ad-full .ad-label { position: static; display: block; margin-bottom: 10px; }
+.ad-big { font-size: 64px; }
+.pro-card { background: linear-gradient(160deg, #3a2a52, var(--panel) 60%); }
+.pro-head { text-align: center; }
+.pro-star { font-size: 46px; animation: bob 1.6s steps(2) infinite; }
+.pro-head .lu-title { font-family: var(--px); font-size: 14px; color: var(--gold); margin: 6px 0 10px; }
+.pro-feats { margin: 8px 0 14px; }
+.pro-fi { width: 30px; text-align: center; font-size: 20px; flex: none; color: var(--gold); }
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
+.plan {
+  position: relative; border: 0; background: var(--panel2); color: var(--text); padding: 18px 4px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; box-shadow: 0 0 0 2px var(--ink);
+}
+.plan.on { background: #4a3a1d; box-shadow: 0 0 0 2px var(--ink), inset 0 0 0 3px var(--gold); }
+.plan b { font-family: var(--px); font-size: 8px; line-height: 1.5; color: var(--gold); font-weight: normal; }
+.plan-price { font-size: 26px; }
+.plan small { color: var(--muted); font-size: 15px; }
+.plan-note { color: var(--cyan); font-size: 14px; line-height: 1.1; margin-top: 4px; }
+.plan-tag { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: var(--green2); color: var(--ink); font-size: 14px; padding: 0 6px; box-shadow: 0 0 0 2px var(--ink); }
+.emoji-grid button.locked { opacity: .45; position: relative; }
+.emoji-grid button.locked::after { content: '🔒'; position: absolute; right: 1px; bottom: 0; font-size: 11px; }
+.version { cursor: default; user-select: none; }

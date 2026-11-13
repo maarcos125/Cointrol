@@ -137,5 +137,6 @@ function levelUp(p) {
   el.innerHTML = `<div class="levelup-box"><div class="lu-stars">✦ ✦ ✦</div><div class="lu-title">¡SUBES DE NIVEL!</div>
     <div class="lu-level">NV ${p.lv}</div><div class="lu-sub">${esc(p.title)}</div><button class="btn" type="button">Continuar</button></div>`;
   document.body.appendChild(el);
-  el.querySelector('button').onclick = () => el.remove();
+  el.querySelector('button').onclick = () => { el.remove(); syncHistory(); };
+  syncHistory();
 }

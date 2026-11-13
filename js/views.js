@@ -8,6 +8,7 @@ const ui = {
 };
 const VIEW_TITLES = { base: 'Base', diario: 'Diario', stats: 'Estadísticas', misiones: 'Misiones', mochila: 'Mochila' };
 const SUBTITLES = {
+  pro: 'Cointrol Pro',
   excel: 'Pasar al Excel', import: 'Importar del Excel', budgets: 'Presupuestos', recurring: 'Recurrentes',
   loans: 'Préstamos y deudas', accounts: 'Cuentas', cats: 'Categorías', settings: 'Ajustes',
 };
@@ -19,6 +20,7 @@ function render() {
   $$('#tabbar button').forEach((b) => b.classList.toggle('active', b.dataset.nav === ui.view));
   $('#fab').hidden = !['base', 'diario'].includes(ui.view) || ui.select;
   renderHud();
+  syncHistory();
 }
 
 // Barra superior: nivel y oro siempre visibles
@@ -27,7 +29,7 @@ function renderHud() {
   const span = p.to - p.from;
   $('#hud').innerHTML = `<span class="hud-lv">NV${p.lv}</span>
     <span class="hud-xp"><i style="width:${Math.min(100, ((p.xp - p.from) / span) * 100)}%"></i></span>
-    <span class="hud-gold">🪙 ${esc(eur(totalGold()).replace(/\s?€/, ''))}</span>`;
+    ${EDITION && isPro() ? '<span class="pro-tag">PRO</span>' : ''}<span class="hud-gold">🪙 ${esc(eur(totalGold()).replace(/\s?€/, ''))}</span>`;
 }
 
 // ================================================================ piezas comunes
@@ -225,6 +227,7 @@ function viewBase() {
   if (h.quests && goals.length) {
     html += `<div class="card"><h2>⚔️ Misiones activas</h2>${goals.map((g) => bossMini(g, plan.res[g.id])).join('')}</div>`;
   }
+  html += adBanner();
   if (h.recent) {
     html += `<div class="card"><h2>📜 Últimos movimientos</h2>
       ${recent.length ? recent.map(movRow).join('') : empty('🪙', 'Aún no hay movimientos.<br>Pulsa <b>+</b> para añadir el primero y ganar tus primeros XP.')}</div>`;
@@ -269,19 +272,20 @@ function viewDiario() {
   ${ui.select ? `<div class="selbar"><span>${ui.selected.size} seleccionados</span>
     <button class="mini" data-action="sel-all">Todos</button><button class="mini" data-action="sel-cat" ${ui.selected.size ? '' : 'disabled'}>Categoría</button>
     <button class="mini danger" data-action="sel-del" ${ui.selected.size ? '' : 'disabled'}>Borrar</button></div>` : ''}
+  ${adBanner()}
   ${movs.length ? Object.entries(days).map(([d, list]) => `<div class="day"><span>${esc(dateLabel(d))}</span><span>${signed(dayTotal(list))}</span></div>${list.map(movRow).join('')}`).join('')
     : empty('🔍', 'No hay movimientos con estos filtros.')}`;
 }
 
 // ================================================================ ESTADÍSTICAS
 function viewStats() {
-  const top = seg([['month', 'Mes'], ['year', 'Año']], ui.statsMode, 'stats-mode');
+  const top = seg([['month', 'Mes'], ['year', 'Año' + (isPro() ? '' : ' 🔒')]], ui.statsMode, 'stats-mode');
   if (ui.statsMode === 'year') {
     const y = yearStats(ui.year);
     const rows = y.months.map((s, i) => (s.movs.length ? `<tr><td>${MON3[i]}</td><td class="pos">${eur(s.inc)}</td><td class="neg">${eur(s.exp)}</td>
       <td class="${s.diff >= 0 ? 'pos' : 'neg'}">${eur(s.saving)}</td></tr>` : '')).join('');
     return `${top}${periodNav(String(ui.year), 'year')}
-      ${excelPanel(y)}
+      ${excelPanel(y)}${adBanner()}
       <div class="card"><h2>📊 Mes a mes</h2>${monthBars(y.months)}</div>
       <div class="card"><h2>🥧 Gastos del año</h2><div class="chart-wrap">${donut(catDonutItems(y.byCat), eur(y.exp), 'gastado')}</div>
         ${categoryLegend(y.byCat, y.bySub, y.exp || 1)}</div>
@@ -294,7 +298,7 @@ function viewStats() {
   const b = db.budgets[0];
   const lim = b ? budgetStatus(b, `${ui.ym}-15`).limit : 0;
   return `${top}${periodNav(ymLabel(ui.ym), 'month')}
-    ${excelPanel(s)}
+    ${excelPanel(s)}${adBanner()}
     <div class="card"><h2>🥧 Gastos por categoría</h2><div class="chart-wrap">${donut(catDonutItems(s.byCat), eur(s.exp), 'gastado')}</div>
       ${categoryLegend(s.byCat, s.bySub, s.exp || 1)}<p class="muted small">Toca una categoría para ver sus subcategorías.</p></div>
     <div class="card"><h2>📈 Gasto acumulado</h2>${spendLine(ui.ym, lim)}</div>
@@ -344,21 +348,22 @@ function bossCard(g, r, i, n) {
 
 // ================================================================ MOCHILA (más)
 function viewMochila() {
-  const subs = { excel: viewExcel, import: viewImport, budgets: viewBudgets, recurring: viewRecurring, loans: viewLoans, accounts: viewAccounts, cats: viewCats, settings: viewSettings };
+  const subs = { pro: viewPro, excel: viewExcel, import: viewImport, budgets: viewBudgets, recurring: viewRecurring, loans: viewLoans, accounts: viewAccounts, cats: viewCats, settings: viewSettings };
   if (ui.sub && subs[ui.sub]) return `<button class="back" data-action="sub" data-sub="">◀ Mochila</button>` + subs[ui.sub]();
   const it = (sub, icon, t, d) => `<button class="slot" data-action="sub" data-sub="${sub}"><span class="slot-ico">${icon}</span><b>${t}</b><span>${d}</span></button>`;
   return `<div class="slots">
+    ${EDITION ? it('pro', '⭐', isPro() ? 'Pro activo' : 'Cointrol Pro', isPro() ? 'Todo desbloqueado' : 'Sin anuncios ni límites') : ''}
     ${it('excel', '📋', 'Pasar al Excel', 'Copia el mes y pégalo')}
-    ${it('import', '📥', 'Importar', 'Del Excel a la app')}
+    ${it('import', '📥', 'Importar' + lockTag(), 'Del Excel a la app')}
     ${it('budgets', '🗡️', 'Presupuestos', 'Límites y vida')}
     ${it('recurring', '🔁', 'Recurrentes', 'Suscripciones y pagos fijos')}
-    ${it('loans', '🤝', 'Préstamos', 'Lo que te deben y debes')}
+    ${it('loans', '🤝', 'Préstamos' + lockTag(), 'Lo que te deben y debes')}
     ${it('accounts', '🏦', 'Cuentas', 'Banco, efectivo…')}
     ${it('cats', '🏷️', 'Categorías', 'Iconos, grupos, nuevas')}
     ${it('settings', '⚙️', 'Ajustes', 'Jugador, sonido, copia')}</div>
     <div class="card"><h2>🔒 Privacidad</h2><p class="muted">Tus datos se guardan <b>solo en este móvil</b>. No hay cuentas ni servidores.
     Haz una copia de seguridad de vez en cuando (Ajustes → Guardar partida).</p></div>
-    ${installCard()}`;
+    ${adBanner()}${installCard()}`;
 }
 function installCard() {
   if (window.matchMedia('(display-mode: standalone)').matches) return '';
@@ -504,7 +509,7 @@ function viewSettings() {
   const homeOpts = [['budget', '❤️ Vida del mes'], ['saving', '💧 Maná de ahorro'], ['upcoming', '⏳ Pagos'], ['quests', '⚔️ Misiones'], ['recent', '📜 Últimos movimientos']];
   return `<div class="card"><h2>🧙 Jugador</h2>
     <div class="field"><label>Nombre</label><input class="input" id="set-name" maxlength="20" value="${esc(s.playerName)}"></div>
-    <div class="field"><label>Avatar</label><div class="emoji-grid">${AVATARS.map((a) => `<button type="button" class="${a === s.avatar ? 'on' : ''}" data-action="avatar" data-v="${a}">${a}</button>`).join('')}</div></div>
+    <div class="field"><label>Avatar</label><div class="emoji-grid">${AVATARS.map((a, i) => `<button type="button" class="${a === s.avatar ? 'on' : ''} ${!isPro() && i >= FREE_LIMITS.avatars ? 'locked' : ''}" data-action="avatar" data-v="${a}">${a}</button>`).join('')}</div></div>
     <button class="btn" data-action="save-name">Guardar</button></div>
   <div class="card"><h2>🎯 Objetivo de ahorro</h2>
     <div class="row"><input class="input" id="target" type="number" inputmode="numeric" min="0" max="100" step="1" value="${Math.round(s.savingsTarget * 100)}" style="max-width:110px">
@@ -512,11 +517,11 @@ function viewSettings() {
   <div class="card"><h2>🏠 Pantalla Base</h2>${homeOpts.map(([k, l]) => `<label class="check"><input type="checkbox" data-home="${k}" ${s.home[k] ? 'checked' : ''}> ${l}</label>`).join('')}</div>
   <div class="card"><h2>🔊 Sonido</h2><label class="check"><input type="checkbox" data-setting="sound" ${s.sound ? 'checked' : ''}> Efectos de sonido 8 bits</label></div>
   <div class="card"><h2>🔐 Bloqueo con PIN</h2><p class="muted small">Pide un PIN de 4 cifras al abrir la app.</p>
-    ${s.pinHash ? '<button class="btn alt" data-action="pin-off">Quitar PIN</button>' : '<button class="btn alt" data-action="pin-on">Poner PIN</button>'}</div>
+    ${s.pinHash ? '<button class="btn alt" data-action="pin-off">Quitar PIN</button>' : `<button class="btn alt" data-action="pin-on">Poner PIN${lockTag()}</button>`}</div>
   <div class="card"><h2>💾 Guardar partida</h2>
     <p class="muted small">${db.movements.length} movimientos, ${db.goals.length} metas, ${db.categories.length} categorías. Guarda la copia en Drive o en tu correo.</p>
     <button class="btn" data-action="backup">💾 Exportar copia (.json)</button><button class="btn alt" data-action="restore">📂 Cargar copia</button>
     <input type="file" id="restore-file" accept="application/json,.json" hidden></div>
   <div class="card"><h2>☠️ Zona peligrosa</h2><button class="btn danger" data-action="wipe">Borrar todos los datos</button></div>
-  <p class="center muted small">Cointrol · versión 2.0</p>`;
+  <p class="center muted small version" data-action="dev-tap">Cointrol · versión 2.1${EDITION ? ' · ' + esc(EDITION.label) : ''}</p>`;
 }

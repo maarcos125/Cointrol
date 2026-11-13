@@ -5,7 +5,14 @@ Hay dos versiones de la app en este repositorio:
 - **Cointrol** (raíz): estilo de videojuego retro. https://maarcos125.github.io/Cointrol/
 - **Cointrol Clásico** (`clasica/`): diseño limpio al estilo de Cashew (Material You, modo claro y oscuro, color de acento), sin niveles, logros ni misiones; las metas se llaman «Objetivos». https://maarcos125.github.io/Cointrol/clasica/
 
-Las dos tienen las mismas funciones de control de gastos y exportación al Excel, se instalan por separado y guardan sus datos por separado. Cointrol Clásico puede copiar los datos de la versión videojuego (Más → Importar del Excel).
+Y dos apps de prueba del modelo para Play Store (mismo código que la versión videojuego, con sus propios datos; pagos y anuncios simulados):
+
+- **Cointrol Gratis (demo)** (`demo-gratis/`): con anuncios de ejemplo y funciones limitadas. https://maarcos125.github.io/Cointrol/demo-gratis/
+- **Cointrol Pro (demo)** (`demo-pro/`): todo desbloqueado y sin anuncios. https://maarcos125.github.io/Cointrol/demo-pro/
+
+En las demos, el modo dueño se abre tocando 7 veces la versión en Mochila → Ajustes.
+
+Las dos versiones principales tienen las mismas funciones de control de gastos y exportación al Excel, se instalan por separado y guardan sus datos por separado. Cointrol Clásico puede copiar los datos de la versión videojuego (Más → Importar del Excel).
 
 ## Versión videojuego
 
@@ -29,6 +36,7 @@ App para el móvil para controlar gastos, ingresos y ahorro, con estilo de video
 - Gráficos: gasto por categoría y subcategoría, gasto acumulado frente al mes anterior y al presupuesto, resumen anual mes a mes.
 - Metas de ahorro con aportación mensual (si el balance no llega, se aparta menos) y prioridades.
 - Bloqueo con PIN, pantalla de inicio configurable y copia de seguridad en `.json`.
+- Botón «atrás» del móvil y gesto de deslizar: cierran lo que esté abierto o vuelven a la pantalla anterior.
 
 **Videojuego**
 - Nivel y experiencia según lo que apuntas y lo que ahorras, rachas de días, 21 logros.
@@ -37,7 +45,7 @@ App para el móvil para controlar gastos, ingresos y ahorro, con estilo de video
 
 ## Archivos
 
-Web estática sin dependencias: `index.html`, `css/game.css`, `js/` (`core`, `game`, `views`, `forms`, `main`), `sw.js` (modo sin conexión), `manifest.webmanifest`, `icons/` y `fonts/`.
+Web estática sin dependencias: `index.html`, `css/game.css`, `js/` (`core`, `game`, `views`, `forms`, `nav`, `pro`, `main`), `sw.js` (modo sin conexión), `manifest.webmanifest`, `icons/` y `fonts/`.
 Se publica tal cual con GitHub Pages (rama `main`, carpeta raíz).
 
 Fuentes: [VT323](https://fonts.google.com/specimen/VT323) y [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P), con licencia SIL Open Font License 1.1.
